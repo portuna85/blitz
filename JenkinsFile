@@ -1,0 +1,58 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('GitHub Clone') {
+            steps {
+                git credentialsId: 'repo-hook-access-token-credentials',
+                url: 'https://github.com/portuna85/blitz'
+            }
+        }
+
+        stage('build') {
+            steps {
+                dir('.') {
+                    sh '''
+                        chmod +x ./gradlew
+                        echo 'Start bootJar'
+                        ./gradlew clean build
+                    '''
+                }
+            }
+        }
+
+        stage('publish on ssh'){
+                steps{
+                    dir('backend'){
+                       sshPublisher(
+                            publishers:
+  [
+    sshPublisherDesc(configName: 'ec2-user',
+    transfers:
+    [
+      sshTransfer(
+        cleanRemote: false,
+        excludes: '',
+        execCommand: 'sh /home/ec2-user/app/scripts/init_server.sh',
+        execTimeout: 120000,
+        flatten: false,
+        makeEmptyDirs: false,
+        noDefaultExcludes: false,
+        patternSeparator: '[, ]+',
+        remoteDirectory: '/app/deploy',
+        remoteDirectorySDF: false,
+        removePrefix: 'build/libs',
+        sourceFiles: 'build/libs/*.jar')],
+        usePromotionTimestamp: false,
+        useWorkspaceInPromotion: false,
+        verbose: true
+    )
+  ]
+)
+
+                }
+            }
+
+   }
+    }
+}
