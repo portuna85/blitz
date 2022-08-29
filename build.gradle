@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'com.blitz'
-version = '1.0.1-SNAPSHOT' + new Date().format("yyyy-MM-dd-HH-mm")
+version = '1.0.1-SNAPSHOT'
 sourceCompatibility = '11'
 
 repositories {
