@@ -4,7 +4,7 @@ application-real-db.properties
 .gradle
 build/
 note/
-src/test
+src/test/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
