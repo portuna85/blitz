@@ -83,6 +83,6 @@ public class UserController {
         if (user != null) {
             model.addAttribute("user", user);
         }
-        return "/user/user-modify";
+        return "user/user-modify";
     }
 }
