@@ -28,8 +28,10 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 // For mockMvc
@@ -82,10 +84,7 @@ class PostsApiControllerTest {
         //given
         String title = "title";
         String content = "content";
-        PostsSaveRequestDto requestDto = PostsSaveRequestDto.builder()
-                .title(title)
-                .content(content)
-                .build();
+        PostsSaveRequestDto requestDto = new PostsSaveRequestDto(title, content);
 
         String url = "http://localhost:" + port + "/api/v1/posts";
 
@@ -101,7 +100,7 @@ class PostsApiControllerTest {
         List<Posts> all = postsRepository.findAll();
         assertThat(all.get(0).getTitle()).isEqualTo(title);
         assertThat(all.get(0).getContent()).isEqualTo(content);
-        assertThat(all.get(0).getAuthorEmail()).isEqualTo(loginUser.getEmail());
+        assertThat(all.get(0).getAuthorEmail()).isEqualTo(loginUser.email());
     }
 
     @Test
@@ -109,10 +108,7 @@ class PostsApiControllerTest {
     @DisplayName("제목이_비어있으면_등록이_거부된다")
     void postCreationFailsWhenTitleIsBlank() throws Exception {
         //given
-        PostsSaveRequestDto requestDto = PostsSaveRequestDto.builder()
-                .title("")
-                .content("content")
-                .build();
+        PostsSaveRequestDto requestDto = new PostsSaveRequestDto("", "content");
 
         String url = "http://localhost:" + port + "/api/v1/posts";
 
@@ -130,24 +126,46 @@ class PostsApiControllerTest {
 
     @Test
     @WithMockUser(roles = "USER")
+    @DisplayName("게시글_목록이_페이지네이션되어_조회된다")
+    void postListIsPaginated() throws Exception {
+        //given
+        for (int i = 0; i < 3; i++) {
+            postsRepository.save(Posts.builder()
+                    .title("title" + i)
+                    .content("content" + i)
+                    .author(loginUser.name())
+                    .authorEmail(loginUser.email())
+                    .build());
+        }
+
+        String url = "http://localhost:" + port + "/api/v1/posts/list?page=0&size=2";
+
+        //when & then
+        mvc.perform(get(url).session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.totalElements").value(3))
+                .andExpect(jsonPath("$.totalPages").value(2))
+                .andExpect(jsonPath("$.hasNext").value(true));
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
     @DisplayName("Posts_수정된다")
     void postIsUpdated() throws Exception {
         //given
         Posts savedPosts = postsRepository.save(Posts.builder()
                 .title("title")
                 .content("content")
-                .author(loginUser.getName())
-                .authorEmail(loginUser.getEmail())
+                .author(loginUser.name())
+                .authorEmail(loginUser.email())
                 .build());
 
         Long updateId = savedPosts.getId();
         String expectedTitle = "title2";
         String expectedContent = "content2";
 
-        PostsUpdateRequestDto requestDto = PostsUpdateRequestDto.builder()
-                .title(expectedTitle)
-                .content(expectedContent)
-                .build();
+        PostsUpdateRequestDto requestDto = new PostsUpdateRequestDto(expectedTitle, expectedContent);
 
         String url = "http://localhost:" + port + "/api/v1/posts/" + updateId;
 

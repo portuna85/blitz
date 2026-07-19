@@ -5,6 +5,9 @@ import com.blitz.config.auth.dto.SessionUser;
 import com.blitz.service.PostsService;
 import com.blitz.web.dto.PostsResponseDto;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,10 +20,11 @@ public class IndexController {
     private final PostsService postsService;
 
     @GetMapping("/")
-    public String index(Model model, @LoginUser SessionUser user) {
-        model.addAttribute("posts", postsService.findAllDesc());
+    public String index(Model model, @LoginUser SessionUser user,
+                         @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
+        model.addAttribute("posts", postsService.findAllDesc(pageable));
         if (user != null) {
-            model.addAttribute("userName", user.getName());
+            model.addAttribute("userName", user.name());
         }
         return "index";
     }
@@ -34,7 +38,7 @@ public class IndexController {
     public String postsUpdate(@PathVariable Long id, Model model, @LoginUser SessionUser user) {
         PostsResponseDto dto = postsService.findById(id);
         model.addAttribute("post", dto);
-        model.addAttribute("isOwner", user != null && postsService.isAuthor(id, user.getEmail()));
+        model.addAttribute("isOwner", user != null && postsService.isAuthor(id, user.email()));
 
         return "posts-update";
     }

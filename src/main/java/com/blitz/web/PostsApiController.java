@@ -3,12 +3,16 @@ package com.blitz.web;
 import com.blitz.config.auth.LoginUser;
 import com.blitz.config.auth.dto.SessionUser;
 import com.blitz.service.PostsService;
+import com.blitz.web.dto.PageResponse;
 import com.blitz.web.dto.PostsListResponseDto;
 import com.blitz.web.dto.PostsResponseDto;
 import com.blitz.web.dto.PostsSaveRequestDto;
 import com.blitz.web.dto.PostsUpdateRequestDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,8 +20,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 @RequiredArgsConstructor
 @RestController
@@ -47,7 +49,8 @@ public class PostsApiController {
     }
 
     @GetMapping("/api/v1/posts/list")
-    public List<PostsListResponseDto> findAll() {
-        return postsService.findAllDesc();
+    public PageResponse<PostsListResponseDto> findAll(
+            @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
+        return PageResponse.from(postsService.findAllDesc(pageable));
     }
 }

@@ -1,19 +1,12 @@
 package com.blitz.config.auth.dto;
 
 import com.blitz.domain.user.User;
-import lombok.Getter;
 
 import java.io.Serializable;
 
-@Getter
-public class SessionUser implements Serializable {
-    private String name;
-    private String email;
-    private String picture;
+public record SessionUser(String name, String email, String picture) implements Serializable {
 
     public SessionUser(User user) {
-        this.name = user.getName();
-        this.email = user.getEmail();
-        this.picture = user.getPicture();
+        this(user.getName(), user.getEmail(), user.getPicture());
     }
 }

@@ -1,21 +1,12 @@
 package com.blitz.web.dto;
 
 import com.blitz.domain.posts.Posts;
-import lombok.Getter;
 
 import java.time.LocalDateTime;
 
-@Getter
-public class PostsListResponseDto {
-    private Long id;
-    private String title;
-    private String author;
-    private LocalDateTime modifiedDate;
+public record PostsListResponseDto(Long id, String title, String author, LocalDateTime modifiedDate) {
 
     public PostsListResponseDto(Posts entity) {
-        this.id = entity.getId();
-        this.title = entity.getTitle();
-        this.author = entity.getAuthor();
-        this.modifiedDate = entity.getModifiedDate();
+        this(entity.getId(), entity.getTitle(), entity.getAuthor(), entity.getModifiedDate());
     }
 }

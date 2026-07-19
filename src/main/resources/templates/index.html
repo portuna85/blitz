@@ -33,7 +33,7 @@
             </tr>
             </thead>
             <tbody id="tbody">
-            <tr th:each="post : ${posts}">
+            <tr th:each="post : ${posts.content}">
                 <td th:text="${post.id}"></td>
                 <td><a th:href="@{'/posts/update/' + ${post.id}}" th:text="${post.title}"></a></td>
                 <td th:text="${post.author}"></td>
@@ -41,6 +41,19 @@
             </tr>
             </tbody>
         </table>
+        <nav th:if="${posts.totalPages > 1}">
+            <ul class="pagination">
+                <li class="page-item" th:classappend="${!posts.hasPrevious()} ? 'disabled'">
+                    <a class="page-link" th:href="@{/(page=${posts.number - 1})}">이전</a>
+                </li>
+                <li class="page-item disabled">
+                    <span class="page-link" th:text="${posts.number + 1} + ' / ' + ${posts.totalPages}"></span>
+                </li>
+                <li class="page-item" th:classappend="${!posts.hasNext()} ? 'disabled'">
+                    <a class="page-link" th:href="@{/(page=${posts.number + 1})}">다음</a>
+                </li>
+            </ul>
+        </nav>
     </div>
 
 <div th:replace="~{layout/footer :: footer}"></div>
