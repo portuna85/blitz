@@ -23,10 +23,3 @@ management:
   endpoint:
     health:
       show-details: never
-
-logging:
-  file:
-    name: logs/blitz.log
-  structured:
-    format:
-      file: ecs
