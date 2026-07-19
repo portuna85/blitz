@@ -7,6 +7,7 @@ import com.blitz.web.dto.PostsListResponseDto;
 import com.blitz.web.dto.PostsResponseDto;
 import com.blitz.web.dto.PostsSaveRequestDto;
 import com.blitz.web.dto.PostsUpdateRequestDto;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,12 +26,12 @@ public class PostsApiController {
     private final PostsService postsService;
 
     @PostMapping("/api/v1/posts")
-    public Long save(@RequestBody PostsSaveRequestDto requestDto, @LoginUser SessionUser user) {
+    public Long save(@Valid @RequestBody PostsSaveRequestDto requestDto, @LoginUser SessionUser user) {
         return postsService.save(requestDto, user);
     }
 
     @PutMapping("/api/v1/posts/{id}")
-    public Long update(@PathVariable Long id, @RequestBody PostsUpdateRequestDto requestDto, @LoginUser SessionUser user) {
+    public Long update(@PathVariable Long id, @Valid @RequestBody PostsUpdateRequestDto requestDto, @LoginUser SessionUser user) {
         return postsService.update(id, requestDto, user);
     }
 

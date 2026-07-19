@@ -106,6 +106,30 @@ class PostsApiControllerTest {
 
     @Test
     @WithMockUser(roles = "USER")
+    @DisplayName("제목이_비어있으면_등록이_거부된다")
+    void postCreationFailsWhenTitleIsBlank() throws Exception {
+        //given
+        PostsSaveRequestDto requestDto = PostsSaveRequestDto.builder()
+                .title("")
+                .content("content")
+                .build();
+
+        String url = "http://localhost:" + port + "/api/v1/posts";
+
+        //when
+        mvc.perform(post(url)
+                .session(session)
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(new ObjectMapper().writeValueAsString(requestDto)))
+                .andExpect(status().isBadRequest());
+
+        //then
+        assertThat(postsRepository.findAll()).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
     @DisplayName("Posts_수정된다")
     void postIsUpdated() throws Exception {
         //given
