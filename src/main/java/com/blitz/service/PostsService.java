@@ -7,6 +7,7 @@ import com.blitz.web.dto.PostsListResponseDto;
 import com.blitz.web.dto.PostsResponseDto;
 import com.blitz.web.dto.PostsSaveRequestDto;
 import com.blitz.web.dto.PostsUpdateRequestDto;
+import com.blitz.web.exception.PostNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -72,7 +73,7 @@ public class PostsService {
 
     private Posts findPostsOrThrow(Long id) {
         return postsRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("해당 게시글이 없습니다. id=" + id));
+                .orElseThrow(() -> new PostNotFoundException(id));
     }
 
     private void requireLogin(SessionUser user) {

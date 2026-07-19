@@ -182,4 +182,41 @@ class PostsApiControllerTest {
         assertThat(all.get(0).getTitle()).isEqualTo(expectedTitle);
         assertThat(all.get(0).getContent()).isEqualTo(expectedContent);
     }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    @DisplayName("존재하지_않는_게시글_조회시_404가_반환된다")
+    void findByIdReturns404WhenPostDoesNotExist() throws Exception {
+        //given
+        String url = "http://localhost:" + port + "/api/v1/posts/999999";
+
+        //when & then
+        mvc.perform(get(url).session(session))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    @DisplayName("작성자가_아니면_수정시_403이_반환된다")
+    void updateReturns403WhenNotOwner() throws Exception {
+        //given
+        Posts savedPosts = postsRepository.save(Posts.builder()
+                .title("title")
+                .content("content")
+                .author("other")
+                .authorEmail("other@example.com")
+                .build());
+
+        PostsUpdateRequestDto requestDto = new PostsUpdateRequestDto("title2", "content2");
+        String url = "http://localhost:" + port + "/api/v1/posts/" + savedPosts.getId();
+
+        //when & then
+        mvc.perform(put(url)
+                .session(session)
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(new ObjectMapper().writeValueAsString(requestDto)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").exists());
+    }
 }
