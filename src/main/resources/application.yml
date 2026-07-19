@@ -8,6 +8,9 @@ spring:
   session:
     jdbc:
       initialize-schema: embedded
+  h2:
+    console:
+      enabled: true
   security:
     oauth2:
       client:
