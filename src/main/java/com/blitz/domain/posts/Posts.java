@@ -10,6 +10,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Version;
 
 @Getter
 @NoArgsConstructor
@@ -31,6 +32,9 @@ public class Posts extends BaseTimeEntity {
 
     @Column(nullable = false)
     private String authorEmail;
+
+    @Version
+    private Long version;
 
     @Builder
     public Posts(String title, String content, String author, String authorEmail) {
