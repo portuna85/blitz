@@ -13,11 +13,12 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 
 @Getter
 @NoArgsConstructor
 @Entity
-@Table(name = "users")
+@Table(name = "users", uniqueConstraints = @UniqueConstraint(columnNames = {"provider", "provider_id"}))
 public class User extends BaseTimeEntity {
 
     @Id
@@ -33,15 +34,23 @@ public class User extends BaseTimeEntity {
     @Column
     private String picture;
 
+    @Column(nullable = false)
+    private String provider;
+
+    @Column(name = "provider_id", nullable = false)
+    private String providerId;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
 
     @Builder
-    public User(String name, String email, String picture, Role role) {
+    public User(String name, String email, String picture, String provider, String providerId, Role role) {
         this.name = name;
         this.email = email;
         this.picture = picture;
+        this.provider = provider;
+        this.providerId = providerId;
         this.role = role;
     }
 

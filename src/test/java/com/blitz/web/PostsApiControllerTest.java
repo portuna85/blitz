@@ -61,6 +61,8 @@ class PostsApiControllerTest {
         loginUser = new SessionUser(User.builder()
                 .name("author")
                 .email("author@example.com")
+                .provider("test")
+                .providerId("test-provider-id")
                 .role(Role.USER)
                 .build());
 
