@@ -2,6 +2,7 @@ HELP.md
 .gradle/
 build/
 logs/
+.env
 
 ### IntelliJ IDEA ###
 .idea/

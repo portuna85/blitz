@@ -56,3 +56,20 @@ tasks.withType<Test> {
 springBoot {
     buildInfo()
 }
+
+tasks.named<org.springframework.boot.gradle.tasks.run.BootRun>("bootRun") {
+    val envFile = rootProject.file(".env")
+    if (envFile.exists()) {
+        envFile.readLines()
+            .map { it.trim() }
+            .filter { it.isNotEmpty() && !it.startsWith("#") && it.contains("=") }
+            .forEach { line ->
+                val index = line.indexOf('=')
+                val key = line.substring(0, index).trim()
+                val value = line.substring(index + 1).trim()
+                if (value.isNotEmpty()) {
+                    environment(key, value)
+                }
+            }
+    }
+}
