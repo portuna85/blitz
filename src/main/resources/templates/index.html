@@ -10,7 +10,10 @@
                 <a href="/posts/save" role="button" class="btn btn-primary">글 등록</a>
                 <div th:if="${userName != null}">
                     Logged in as: <span id="user" th:text="${userName}"></span>
-                    <a href="/logout" class="btn btn-info active" role="button">Logout</a>
+                    <form th:action="@{/logout}" method="post" style="display:inline">
+                        <input type="hidden" th:if="${_csrf}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                        <button type="submit" class="btn btn-info active">Logout</button>
+                    </form>
                 </div>
                 <div th:unless="${userName != null}">
                     <a href="/oauth2/authorization/google" class="btn btn-success active" role="button">Google Login</a>

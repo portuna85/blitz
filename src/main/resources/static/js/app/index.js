@@ -13,6 +13,10 @@ var main = {
             _this.delete();
         });
     },
+    getCsrfToken : function () {
+        var match = document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]*)/);
+        return match ? decodeURIComponent(match[1]) : null;
+    },
     save : function () {
         var data = {
             title: $('#title').val(),
@@ -24,6 +28,7 @@ var main = {
             url: '/api/v1/posts',
             dataType: 'json',
             contentType:'application/json; charset=utf-8',
+            headers: { 'X-XSRF-TOKEN': this.getCsrfToken() },
             data: JSON.stringify(data)
         }).done(function() {
             alert('글이 등록되었습니다.');
@@ -45,6 +50,7 @@ var main = {
             url: '/api/v1/posts/'+id,
             dataType: 'json',
             contentType:'application/json; charset=utf-8',
+            headers: { 'X-XSRF-TOKEN': this.getCsrfToken() },
             data: JSON.stringify(data)
         }).done(function() {
             alert('글이 수정되었습니다.');
@@ -60,7 +66,8 @@ var main = {
             type: 'DELETE',
             url: '/api/v1/posts/'+id,
             dataType: 'json',
-            contentType:'application/json; charset=utf-8'
+            contentType:'application/json; charset=utf-8',
+            headers: { 'X-XSRF-TOKEN': this.getCsrfToken() }
         }).done(function() {
             alert('글이 삭제되었습니다.');
             window.location.href = '/';
