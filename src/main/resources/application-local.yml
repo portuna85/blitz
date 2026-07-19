@@ -5,10 +5,12 @@ spring:
     password: ${MARIADB_PASSWORD}
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
+  flyway:
+    enabled: true
   session:
     jdbc:
-      initialize-schema: always
+      initialize-schema: never
   security:
     oauth2:
       client:
