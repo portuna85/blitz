@@ -3,3 +3,6 @@ spring:
     name: blitz
   profiles:
     default: local
+  threads:
+    virtual:
+      enabled: true
