@@ -1,5 +1,7 @@
 package com.blitz.web;
 
+import com.blitz.config.auth.LoginUser;
+import com.blitz.config.auth.dto.SessionUser;
 import com.blitz.service.PostsService;
 import com.blitz.web.dto.PostsListResponseDto;
 import com.blitz.web.dto.PostsResponseDto;
@@ -23,18 +25,18 @@ public class PostsApiController {
     private final PostsService postsService;
 
     @PostMapping("/api/v1/posts")
-    public Long save(@RequestBody PostsSaveRequestDto requestDto) {
-        return postsService.save(requestDto);
+    public Long save(@RequestBody PostsSaveRequestDto requestDto, @LoginUser SessionUser user) {
+        return postsService.save(requestDto, user);
     }
 
     @PutMapping("/api/v1/posts/{id}")
-    public Long update(@PathVariable Long id, @RequestBody PostsUpdateRequestDto requestDto) {
-        return postsService.update(id, requestDto);
+    public Long update(@PathVariable Long id, @RequestBody PostsUpdateRequestDto requestDto, @LoginUser SessionUser user) {
+        return postsService.update(id, requestDto, user);
     }
 
     @DeleteMapping("/api/v1/posts/{id}")
-    public Long delete(@PathVariable Long id) {
-        postsService.delete(id);
+    public Long delete(@PathVariable Long id, @LoginUser SessionUser user) {
+        postsService.delete(id, user);
         return id;
     }
 

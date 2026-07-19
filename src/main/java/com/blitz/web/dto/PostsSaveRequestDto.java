@@ -10,20 +10,19 @@ import lombok.NoArgsConstructor;
 public class PostsSaveRequestDto {
     private String title;
     private String content;
-    private String author;
 
     @Builder
-    public PostsSaveRequestDto(String title, String content, String author) {
+    public PostsSaveRequestDto(String title, String content) {
         this.title = title;
         this.content = content;
-        this.author = author;
     }
 
-    public Posts toEntity() {
+    public Posts toEntity(String author, String authorEmail) {
         return Posts.builder()
                 .title(title)
                 .content(content)
                 .author(author)
+                .authorEmail(authorEmail)
                 .build();
     }
 
