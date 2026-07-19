@@ -1,0 +1,5 @@
+ALTER TABLE users
+    MODIFY created_date DATETIME(6) NOT NULL,
+    MODIFY modified_date DATETIME(6) NOT NULL,
+    MODIFY picture VARCHAR(2048),
+    MODIFY provider_id VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL;

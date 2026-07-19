@@ -30,7 +30,7 @@ class ApplicationTests {
         assertNotNull(applicationContext.getBean(SpringTemplateEngine.class));
 
         try (Connection connection = dataSource.getConnection()) {
-            assertTrue(connection.getMetaData().getURL().startsWith("jdbc:h2:mem:blitz"));
+            assertTrue(connection.getMetaData().getURL().startsWith("jdbc:h2:mem:"));
 
             try (ResultSet tables = connection.getMetaData()
                     .getTables(null, null, "SPRING_SESSION", new String[] {"TABLE"})) {

@@ -5,6 +5,7 @@ import com.blitz.config.auth.dto.SessionUser;
 import com.blitz.domain.user.User;
 import com.blitz.domain.user.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
@@ -22,10 +23,10 @@ import java.util.Collections;
 public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
     private final UserRepository userRepository;
     private final HttpSession httpSession;
+    private final OAuth2UserService<OAuth2UserRequest, OAuth2User> delegate = new DefaultOAuth2UserService();
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
-        OAuth2UserService<OAuth2UserRequest, OAuth2User> delegate = new DefaultOAuth2UserService();
         OAuth2User oAuth2User = delegate.loadUser(userRequest);
 
         String registrationId = userRequest.getClientRegistration().getRegistrationId();
@@ -35,7 +36,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         OAuthAttributes attributes = OAuthAttributes.of(registrationId, userNameAttributeName, oAuth2User.getAttributes());
 
         User user = saveOrUpdate(attributes);
-        httpSession.setAttribute("user", new SessionUser(user));
+        httpSession.setAttribute(SessionUser.SESSION_ATTRIBUTE, new SessionUser(user));
 
         return new DefaultOAuth2User(
                 Collections.singleton(new SimpleGrantedAuthority(user.getRoleKey())),
@@ -45,10 +46,25 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 
 
     private User saveOrUpdate(OAuthAttributes attributes) {
-        User user = userRepository.findByProviderAndProviderId(attributes.getProvider(), attributes.getProviderId())
-                .map(entity -> entity.update(attributes.getName(), attributes.getPicture()))
-                .orElse(attributes.toEntity());
+        return userRepository.findByProviderAndProviderId(attributes.getProvider(), attributes.getProviderId())
+                .map(user -> saveUpdatedUser(user, attributes))
+                .orElseGet(() -> saveNewUser(attributes));
+    }
 
-        return userRepository.save(user);
+    private User saveNewUser(OAuthAttributes attributes) {
+        try {
+            return userRepository.save(attributes.toEntity());
+        } catch (DataIntegrityViolationException concurrentInsert) {
+            return userRepository.findByProviderAndProviderId(attributes.getProvider(), attributes.getProviderId())
+                    .map(user -> saveUpdatedUser(user, attributes))
+                    .orElseThrow(() -> concurrentInsert);
+        }
+    }
+
+    private User saveUpdatedUser(User user, OAuthAttributes attributes) {
+        return userRepository.save(user.update(
+                attributes.getName(),
+                attributes.getEmail(),
+                attributes.getPicture()));
     }
 }

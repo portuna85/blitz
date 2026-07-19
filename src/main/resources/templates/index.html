@@ -1,60 +1,95 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{layout/header :: header}"></head>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/header :: header('게시글 목록', false)}"></head>
 <body>
+<a class="skip-link" href="#main-content">본문으로 건너뛰기</a>
 
-    <h1>스프링부트로 시작하는 웹 서비스 Ver.2</h1>
-    <div class="col-md-12">
-        <div class="row">
-            <div class="col-md-6">
-                <a th:if="${userName != null}" href="/posts/save" role="button" class="btn btn-primary">글 등록</a>
-                <div th:if="${userName != null}">
-                    Logged in as: <span id="user" th:text="${userName}"></span>
-                    <form th:action="@{/logout}" method="post" class="d-inline">
-                        <input type="hidden" th:if="${_csrf}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                        <button type="submit" class="btn btn-info active">Logout</button>
-                    </form>
-                </div>
-                <div th:unless="${userName != null}">
-                    <a href="/oauth2/authorization/google" class="btn btn-success active" role="button">Google Login</a>
-                    <a href="/oauth2/authorization/naver" class="btn btn-secondary active" role="button">Naver Login</a>
-                </div>
-            </div>
+<header class="site-header">
+    <div class="container site-header__inner">
+        <a class="brand" th:href="@{/}">Blitz</a>
+        <div class="account-actions">
+            <th:block th:if="${userName != null}">
+                <span class="account-name"><strong th:text="${userName}">사용자</strong>님</span>
+                <a class="button button--primary" th:href="@{/posts/save}">글 등록</a>
+                <form th:action="@{/logout}" method="post">
+                    <input type="hidden" th:if="${_csrf != null}"
+                           th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                    <button type="submit" class="button button--quiet">로그아웃</button>
+                </form>
+            </th:block>
+            <nav class="login-actions" th:unless="${userName != null}" aria-label="로그인">
+                <a class="button button--outline" th:href="@{/oauth2/authorization/google}">Google 로그인</a>
+                <a class="button button--naver" th:href="@{/oauth2/authorization/naver}">Naver 로그인</a>
+            </nav>
         </div>
-        <br>
-        <!-- 목록 출력 영역 -->
-        <table class="table table-horizontal table-bordered">
-            <thead class="thead-strong">
-            <tr>
-                <th>게시글번호</th>
-                <th>제목</th>
-                <th>작성자</th>
-                <th>최종수정일</th>
-            </tr>
-            </thead>
-            <tbody id="tbody">
-            <tr th:each="post : ${posts.content}">
-                <td th:text="${post.id}"></td>
-                <td><a th:href="@{/posts/update/{id}(id=${post.id})}" th:text="${post.title}"></a></td>
-                <td th:text="${post.author}"></td>
-                <td th:text="${post.modifiedDate}"></td>
-            </tr>
-            </tbody>
-        </table>
-        <nav th:if="${posts.totalPages > 1}">
-            <ul class="pagination">
-                <li class="page-item" th:classappend="${!posts.hasPrevious()} ? 'disabled'">
-                    <a class="page-link" th:href="@{/(page=${posts.number - 1})}">이전</a>
-                </li>
-                <li class="page-item disabled">
-                    <span class="page-link" th:text="${posts.number + 1} + ' / ' + ${posts.totalPages}"></span>
-                </li>
-                <li class="page-item" th:classappend="${!posts.hasNext()} ? 'disabled'">
-                    <a class="page-link" th:href="@{/(page=${posts.number + 1})}">다음</a>
-                </li>
-            </ul>
-        </nav>
     </div>
+</header>
+
+<main id="main-content" class="container main-content" tabindex="-1">
+    <div class="page-heading">
+        <div>
+            <p class="eyebrow">COMMUNITY</p>
+            <h1>게시글</h1>
+            <p class="page-description">새로운 이야기와 업데이트를 확인하세요.</p>
+        </div>
+    </div>
+
+    <div id="flash-message" class="notice" data-flash-message hidden tabindex="-1"></div>
+
+    <section aria-labelledby="posts-heading">
+        <h2 id="posts-heading" class="visually-hidden">게시글 목록</h2>
+        <div class="table-scroll">
+            <table class="posts-table">
+                <caption class="visually-hidden">게시글 번호, 제목, 작성자, 최종 수정일 목록</caption>
+                <thead>
+                <tr>
+                    <th scope="col">번호</th>
+                    <th scope="col">제목</th>
+                    <th scope="col">작성자</th>
+                    <th scope="col">최종 수정일</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="post : ${posts.content}">
+                    <td class="posts-table__id" th:text="${post.id}">1</td>
+                    <td>
+                        <a class="post-link" th:href="@{/posts/{id}(id=${post.id})}"
+                           th:text="${post.title}">게시글 제목</a>
+                    </td>
+                    <td th:text="${post.author}">작성자</td>
+                    <td>
+                        <time th:datetime="${post.modifiedDate}"
+                              th:text="${post.modifiedDate}">2026-01-01T12:00:00</time>
+                    </td>
+                </tr>
+                <tr th:if="${posts.empty}">
+                    <td class="empty-state" colspan="4">아직 등록된 게시글이 없습니다.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <nav class="pagination" th:if="${posts.totalPages > 1}" aria-label="게시글 페이지">
+            <a class="pagination__link" th:if="${posts.hasPrevious()}"
+               th:href="@{/(page=${posts.number - 1},size=${posts.size})}" rel="prev">이전</a>
+            <span class="pagination__link pagination__link--disabled" th:unless="${posts.hasPrevious()}"
+                  aria-disabled="true">이전</span>
+
+            <span class="pagination__status" aria-current="page">
+                <span class="visually-hidden">현재 페이지 </span>
+                <span th:text="${posts.number + 1}">1</span>
+                <span aria-hidden="true"> / </span>
+                <span class="visually-hidden">전체 페이지 </span>
+                <span th:text="${posts.totalPages}">1</span>
+            </span>
+
+            <a class="pagination__link" th:if="${posts.hasNext()}"
+               th:href="@{/(page=${posts.number + 1},size=${posts.size})}" rel="next">다음</a>
+            <span class="pagination__link pagination__link--disabled" th:unless="${posts.hasNext()}"
+                  aria-disabled="true">다음</span>
+        </nav>
+    </section>
+</main>
 
 <div th:replace="~{layout/footer :: footer}"></div>
 </body>

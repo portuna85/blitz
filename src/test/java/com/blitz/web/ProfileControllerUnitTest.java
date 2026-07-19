@@ -47,11 +47,12 @@ class ProfileControllerUnitTest {
     }
 
     @Test
-    @DisplayName("active_profile이_없으면_default가_조회된다")
-    void defaultIsResolvedWhenNoActiveProfile() {
+    @DisplayName("active_profile이_없으면_설정된_default_profile이_조회된다")
+    void configuredDefaultIsResolvedWhenNoActiveProfile() {
         //given
-        String expectedProfile = "default";
+        String expectedProfile = "local";
         MockEnvironment env = new MockEnvironment();
+        env.setDefaultProfiles(expectedProfile);
         ProfileController controller = new ProfileController(env);
 
         //when

@@ -17,7 +17,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ActiveProfiles("test")
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest
 class ProfileControllerTest {
 
     @Autowired
@@ -34,7 +34,7 @@ class ProfileControllerTest {
     }
 
     @Test
-    @DisplayName("profile은_인증없이_호출하면_로그인으로_리다이렉트된다")
+    @DisplayName("profile은_인증없이_호출하면_로그인으로_이동한다")
     void profileRedirectsToLoginWithoutAuth() throws Exception {
         mvc.perform(get("/profile"))
                 .andExpect(status().is3xxRedirection());

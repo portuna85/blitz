@@ -1,16 +1,12 @@
 package com.blitz.domain.user;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-
-@Getter
-@RequiredArgsConstructor
 public enum Role {
 
-    GUEST("ROLE_GUEST", "손님"),
-    USER("ROLE_USER", "일반 사용자");
+    GUEST,
+    USER;
 
-    private final String key;
-    private final String title;
+    public String getKey() {
+        return "ROLE_" + name();
+    }
 
 }

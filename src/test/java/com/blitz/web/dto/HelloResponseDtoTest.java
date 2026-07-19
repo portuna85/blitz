@@ -8,8 +8,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class HelloResponseDtoTest {
 
     @Test
-    @DisplayName("롬복_기능_테스트")
-    void lombokGeneratedAccessorsWork() {
+    @DisplayName("레코드_접근자가_값을_반환한다")
+    void recordAccessorsReturnValues() {
         //given
         String name = "test";
         int amount = 1000;

@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
-<head th:fragment="header">
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>스프링부트 웹서비스</title>
-
-    <link rel="stylesheet"
-          href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
-          integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T"
-          crossorigin="anonymous">
+<head th:fragment="header(pageTitle, includeCsrf)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Blitz 게시판">
+    <meta name="app-base-url" th:content="@{/}">
+    <meta th:if="${includeCsrf && _csrf != null}" name="_csrf" th:content="${_csrf.token}">
+    <meta th:if="${includeCsrf && _csrf != null}" name="_csrf_header" th:content="${_csrf.headerName}">
+    <title th:text="|${pageTitle} · Blitz|">Blitz</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
 <body>
 </body>

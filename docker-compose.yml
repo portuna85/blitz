@@ -1,15 +1,14 @@
 services:
   mariadb:
     image: mariadb:11
-    container_name: blitz-mariadb
     restart: unless-stopped
     environment:
-      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
-      MARIADB_DATABASE: ${MARIADB_DATABASE}
-      MARIADB_USER: ${MARIADB_USERNAME}
-      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:?set MARIADB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${MARIADB_DATABASE:?set MARIADB_DATABASE}
+      MARIADB_USER: ${MARIADB_USERNAME:?set MARIADB_USERNAME}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD:?set MARIADB_PASSWORD}
     ports:
-      - "13306:3306"
+      - "127.0.0.1:${MARIADB_HOST_PORT:-13306}:3306"
     volumes:
       - blitz-mariadb-data:/var/lib/mysql
     healthcheck:
@@ -17,6 +16,11 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+      start_period: 10s
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 volumes:
   blitz-mariadb-data:

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/header :: header('게시글 상세', false)}"></head>
+<body>
+<a class="skip-link" href="#main-content">본문으로 건너뛰기</a>
+
+<header class="site-header">
+    <div class="container site-header__inner">
+        <a class="brand" th:href="@{/}">Blitz</a>
+        <a class="text-link" th:href="@{/}">목록으로</a>
+    </div>
+</header>
+
+<main id="main-content" class="container main-content main-content--article" tabindex="-1">
+    <div id="flash-message" class="notice" data-flash-message hidden tabindex="-1"></div>
+
+    <article class="post-detail">
+        <header class="post-detail__header">
+            <p class="eyebrow">POST <span th:text="${post.id}">1</span></p>
+            <h1 th:text="${post.title}">게시글 제목</h1>
+            <dl class="post-meta">
+                <div>
+                    <dt>작성자</dt>
+                    <dd th:text="${post.author}">작성자</dd>
+                </div>
+                <div>
+                    <dt>작성일</dt>
+                    <dd>
+                        <time th:datetime="${post.createdDate}"
+                              th:text="${post.createdDate}">2026-01-01T12:00:00</time>
+                    </dd>
+                </div>
+                <div>
+                    <dt>수정일</dt>
+                    <dd>
+                        <time th:datetime="${post.modifiedDate}"
+                              th:text="${post.modifiedDate}">2026-01-01T12:00:00</time>
+                    </dd>
+                </div>
+            </dl>
+        </header>
+
+        <div class="post-content" th:text="${post.content}">게시글 내용</div>
+
+        <footer class="post-detail__actions">
+            <a class="button button--quiet" th:href="@{/}">목록으로</a>
+            <a class="button button--primary" th:if="${isOwner}"
+               th:href="@{/posts/{id}/edit(id=${post.id})}">수정</a>
+        </footer>
+    </article>
+</main>
+
+<div th:replace="~{layout/footer :: footer}"></div>
+</body>
+</html>

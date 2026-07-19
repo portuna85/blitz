@@ -12,17 +12,26 @@ import java.util.List;
 @RequiredArgsConstructor
 @RestController
 public class ProfileController {
+    private static final List<String> DEPLOYMENT_PROFILES = List.of("real", "real1", "real2");
+
     private final Environment env;
 
     @GetMapping("/profile")
     public String profile() {
-        List<String> profiles = Arrays.asList(env.getActiveProfiles());
-        List<String> realProfiles = Arrays.asList("real", "real1", "real2");
-        String defaultProfile = profiles.isEmpty()? "default" : profiles.get(0);
+        List<String> profiles = effectiveProfiles();
 
-        return profiles.stream()
-                .filter(realProfiles::contains)
-                .findAny()
-                .orElse(defaultProfile);
+        return DEPLOYMENT_PROFILES.stream()
+                .filter(profiles::contains)
+                .findFirst()
+                .orElseGet(() -> profiles.getFirst());
+    }
+
+    private List<String> effectiveProfiles() {
+        String[] activeProfiles = env.getActiveProfiles();
+        if (activeProfiles.length > 0) {
+            return Arrays.asList(activeProfiles);
+        }
+
+        return Arrays.asList(env.getDefaultProfiles());
     }
 }

@@ -1,38 +1,68 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{layout/header :: header}"></head>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/header :: header('게시글 수정', true)}"></head>
 <body>
+<a class="skip-link" href="#main-content">본문으로 건너뛰기</a>
 
-<h1>게시글 수정</h1>
-
-<div class="col-md-12">
-    <div class="col-md-4">
-        <div id="form-message" class="alert d-none" role="alert" aria-live="polite"></div>
-        <form id="postUpdateForm">
-            <div class="form-group">
-                <label for="id">글 번호</label>
-                <input type="text" class="form-control" id="id" th:value="${post.id}" readonly>
-            </div>
-            <div class="form-group">
-                <label for="title">제목</label>
-                <input type="text" class="form-control" id="title" th:value="${post.title}" th:readonly="${!isOwner}" required maxlength="500">
-            </div>
-            <div class="form-group">
-                <label for="author"> 작성자 </label>
-                <input type="text" class="form-control" id="author" th:value="${post.author}" readonly>
-            </div>
-            <div class="form-group">
-                <label for="content"> 내용 </label>
-                <textarea class="form-control" id="content" th:text="${post.content}" th:readonly="${!isOwner}" required maxlength="10000"></textarea>
-            </div>
-            <a href="/" role="button" class="btn btn-secondary">취소</a>
-            <th:block th:if="${isOwner}">
-                <button type="submit" class="btn btn-primary" id="btn-update">수정 완료</button>
-                <button type="button" class="btn btn-danger" id="btn-delete">삭제</button>
-            </th:block>
-        </form>
+<header class="site-header">
+    <div class="container site-header__inner">
+        <a class="brand" th:href="@{/}">Blitz</a>
+        <a class="text-link" th:href="@{/posts/{id}(id=${post.id})}">게시글로 돌아가기</a>
     </div>
-</div>
+</header>
+
+<main id="main-content" class="container main-content main-content--narrow" tabindex="-1">
+    <div class="page-heading">
+        <div>
+            <p class="eyebrow">EDIT POST</p>
+            <h1>게시글 수정</h1>
+            <p class="page-description">변경할 내용을 확인한 뒤 저장하세요.</p>
+        </div>
+    </div>
+
+    <div id="form-message" class="notice" data-flash-message hidden tabindex="-1"></div>
+
+    <form id="postUpdateForm" class="post-form"
+          th:attr="data-update-url=@{/api/v1/posts/{id}(id=${post.id})},
+                   data-delete-url=@{/api/v1/posts/{id}(id=${post.id})},
+                   data-detail-url=@{/posts/{id}(id=${post.id})}">
+        <input type="hidden" id="post-id" name="id" th:value="${post.id}">
+        <input type="hidden" id="post-version" name="version" th:value="${post.version}">
+
+        <dl class="post-summary">
+            <div>
+                <dt>글 번호</dt>
+                <dd th:text="${post.id}">1</dd>
+            </div>
+            <div>
+                <dt>작성자</dt>
+                <dd th:text="${post.author}">작성자</dd>
+            </div>
+        </dl>
+
+        <div class="form-field">
+            <label for="title">제목 <span aria-hidden="true">*</span></label>
+            <input type="text" id="title" name="title" th:value="${post.title}"
+                   required maxlength="500" autocomplete="off" aria-describedby="title-hint">
+            <p id="title-hint" class="field-hint">필수 입력 · 최대 500자</p>
+        </div>
+
+        <div class="form-field">
+            <label for="content">내용 <span aria-hidden="true">*</span></label>
+            <textarea id="content" name="content" th:text="${post.content}"
+                      required maxlength="10000" rows="14" aria-describedby="content-hint"></textarea>
+            <p id="content-hint" class="field-hint">필수 입력 · 최대 10,000자</p>
+        </div>
+
+        <div class="form-actions form-actions--spread">
+            <button type="button" class="button button--danger" id="btn-delete">삭제</button>
+            <div class="form-actions__primary">
+                <a class="button button--quiet" th:href="@{/posts/{id}(id=${post.id})}">취소</a>
+                <button type="submit" class="button button--primary" id="btn-update">변경 저장</button>
+            </div>
+        </div>
+    </form>
+</main>
 
 <div th:replace="~{layout/footer :: footer}"></div>
 </body>

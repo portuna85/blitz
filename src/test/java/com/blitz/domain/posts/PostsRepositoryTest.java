@@ -38,6 +38,7 @@ class PostsRepositoryTest {
                 .content(content)
                 .author("jojoldu")
                 .authorEmail("jojoldu@gmail.com")
+                .authorUserId(1L)
                 .build());
 
         //when
@@ -59,6 +60,7 @@ class PostsRepositoryTest {
                 .content("content")
                 .author("author")
                 .authorEmail("author@example.com")
+                .authorUserId(1L)
                 .build());
 
         //when
@@ -80,6 +82,7 @@ class PostsRepositoryTest {
                 .content("content")
                 .author("author")
                 .authorEmail("author@example.com")
+                .authorUserId(1L)
                 .build());
 
         // 서로 다른 두 요청이 같은 시점의 게시글을 각자 조회했다고 가정
