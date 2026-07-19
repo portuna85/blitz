@@ -27,9 +27,15 @@ public class SecurityConfig {
                         .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
                         .ignoringRequestMatchers("/h2-console/**"))
                 .addFilterAfter(new CsrfCookieFilter(), CsrfFilter.class)
-                .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
+                .headers(headers -> headers
+                        .frameOptions(HeadersConfigurer.FrameOptionsConfig::disable)
+                        .contentSecurityPolicy(csp -> csp.policyDirectives(
+                                "default-src 'self'; "
+                                        + "script-src 'self' https://code.jquery.com https://stackpath.bootstrapcdn.com; "
+                                        + "style-src 'self' https://stackpath.bootstrapcdn.com; "
+                                        + "frame-ancestors 'self'")))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/css/**", "/images/**", "/js/**", "/h2-console/**", "/profile").permitAll()
+                        .requestMatchers("/", "/css/**", "/images/**", "/js/**", "/h2-console/**", "/actuator/**").permitAll()
                         .requestMatchers("/api/v1/**").hasRole(Role.USER.name())
                         .anyRequest().authenticated())
                 .logout(logout -> logout

@@ -30,6 +30,7 @@ dependencies {
 
     implementation("org.springframework.boot:spring-boot-starter-flyway")
     implementation("org.flywaydb:flyway-mysql")
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
 
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
@@ -50,4 +51,8 @@ dependencies {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+springBoot {
+    buildInfo()
 }
