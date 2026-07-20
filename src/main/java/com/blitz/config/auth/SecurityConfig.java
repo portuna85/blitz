@@ -45,7 +45,8 @@ public class SecurityConfig {
                         .requestMatchers("/posts/save", "/posts/*/edit").hasRole(Role.USER.name())
                         .requestMatchers(HttpMethod.GET,
                                 "/posts/{id}", "/posts/update/{id}",
-                                "/api/v1/posts", "/api/v1/posts/*").permitAll()
+                                "/api/v1/posts", "/api/v1/posts/*",
+                                "/api/v1/posts/*/comments").permitAll()
                         .requestMatchers("/api/v1/**").hasRole(Role.USER.name())
                         .anyRequest().authenticated())
                 .exceptionHandling(exceptions -> exceptions

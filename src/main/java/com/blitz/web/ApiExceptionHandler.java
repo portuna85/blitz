@@ -1,5 +1,8 @@
 package com.blitz.web;
 
+import com.blitz.service.exception.CommentNotFoundException;
+import com.blitz.service.exception.CommentVersionConflictException;
+import com.blitz.service.exception.InvalidParentCommentException;
 import com.blitz.service.exception.PostNotFoundException;
 import com.blitz.service.exception.PostVersionConflictException;
 import jakarta.validation.ConstraintViolation;
@@ -21,7 +24,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-@RestControllerAdvice(assignableTypes = PostsApiController.class)
+@RestControllerAdvice(assignableTypes = {PostsApiController.class, CommentsApiController.class})
 public class ApiExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -76,6 +79,24 @@ public class ApiExceptionHandler {
                 HttpStatus.CONFLICT,
                 "post_version_conflict",
                 "다른 사용자가 먼저 이 게시글을 변경했습니다. 새로고침 후 다시 시도해 주세요.");
+    }
+
+    @ExceptionHandler(CommentNotFoundException.class)
+    public ResponseEntity<ApiError> handleCommentNotFound(CommentNotFoundException ex) {
+        return response(HttpStatus.NOT_FOUND, "comment_not_found", ex.getMessage());
+    }
+
+    @ExceptionHandler(InvalidParentCommentException.class)
+    public ResponseEntity<ApiError> handleInvalidParentComment(InvalidParentCommentException ex) {
+        return response(HttpStatus.BAD_REQUEST, "invalid_parent_comment", ex.getMessage());
+    }
+
+    @ExceptionHandler(CommentVersionConflictException.class)
+    public ResponseEntity<ApiError> handleCommentVersionConflict(CommentVersionConflictException ex) {
+        return response(
+                HttpStatus.CONFLICT,
+                "comment_version_conflict",
+                "다른 사용자가 먼저 이 댓글을 변경했습니다. 새로고침 후 다시 시도해 주세요.");
     }
 
     private ResponseEntity<ApiError> response(HttpStatus status, String code, String message) {

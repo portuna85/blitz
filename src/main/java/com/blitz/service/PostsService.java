@@ -30,6 +30,7 @@ public class PostsService {
     private static final Sort DEFAULT_SORT = Sort.by(Sort.Direction.DESC, "id");
 
     private final PostsRepository postsRepository;
+    private final CommentsService commentsService;
 
     @Transactional
     public Long save(PostsSaveRequestDto requestDto, SessionUser user) {
@@ -63,6 +64,7 @@ public class PostsService {
         requireOwner(posts, user);
         requireCurrentVersion(posts, expectedVersion);
 
+        commentsService.deleteAllForPost(id);
         postsRepository.delete(posts);
     }
 

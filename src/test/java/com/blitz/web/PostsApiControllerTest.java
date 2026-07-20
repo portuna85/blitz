@@ -1,6 +1,8 @@
 package com.blitz.web;
 
 import com.blitz.config.auth.dto.SessionUser;
+import com.blitz.domain.comments.Comments;
+import com.blitz.domain.comments.CommentsRepository;
 import com.blitz.domain.posts.Posts;
 import com.blitz.domain.posts.PostsRepository;
 import com.blitz.web.dto.PostsSaveRequestDto;
@@ -50,6 +52,9 @@ class PostsApiControllerTest {
     private PostsRepository postsRepository;
 
     @Autowired
+    private CommentsRepository commentsRepository;
+
+    @Autowired
     private WebApplicationContext context;
 
     @Autowired
@@ -73,6 +78,7 @@ class PostsApiControllerTest {
 
     @AfterEach
     void tearDown() {
+        commentsRepository.deleteAll();
         postsRepository.deleteAll();
     }
 
@@ -377,6 +383,29 @@ class PostsApiControllerTest {
                 .andExpect(jsonPath("$.message").isNotEmpty());
 
         assertThat(postsRepository.findById(saved.getId())).isPresent();
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    @DisplayName("게시글을 삭제하면 해당 게시글의 댓글도 함께 정리된다")
+    void deletingPostCleansUpItsComments() throws Exception {
+        Posts saved = savePost(LOGIN_USER_ID, SHARED_EMAIL, "delete-title");
+        Comments comment = commentsRepository.saveAndFlush(Comments.builder()
+                .postId(saved.getId())
+                .parentId(null)
+                .authorUserId(LOGIN_USER_ID)
+                .author("author")
+                .content("comment")
+                .build());
+
+        mvc.perform(delete("/api/v1/posts/{id}", saved.getId())
+                        .queryParam("version", saved.getVersion().toString())
+                        .session(session)
+                        .with(csrf()))
+                .andExpect(status().isNoContent());
+
+        assertThat(postsRepository.findById(saved.getId())).isEmpty();
+        assertThat(commentsRepository.findById(comment.getId())).isEmpty();
     }
 
     private Posts savePost(Long authorUserId, String authorEmail, String title) {

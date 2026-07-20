@@ -305,10 +305,380 @@
         }
     }
 
+    function fillCommentContent(container, comment, includeReplyButton) {
+        container.dataset.commentId = String(comment.id);
+        container.dataset.version = String(comment.version);
+        container.dataset.owner = String(comment.owner);
+        container.dataset.deleted = String(comment.deleted);
+        container.textContent = '';
+
+        if (comment.deleted) {
+            const body = document.createElement('p');
+            body.className = 'comment__body';
+            body.textContent = '삭제된 댓글입니다.';
+            container.appendChild(body);
+            return;
+        }
+
+        const meta = document.createElement('p');
+        meta.className = 'comment__meta';
+        const author = document.createElement('span');
+        author.className = 'comment__author';
+        author.textContent = comment.author;
+        meta.appendChild(author);
+        const time = document.createElement('time');
+        time.dateTime = comment.createdDate;
+        time.textContent = comment.createdDate;
+        meta.appendChild(time);
+        container.appendChild(meta);
+
+        const body = document.createElement('p');
+        body.className = 'comment__body comment-content';
+        body.textContent = comment.content;
+        container.appendChild(body);
+
+        const actions = document.createElement('div');
+        actions.className = 'comment__actions';
+        if (includeReplyButton) {
+            const replyBtn = document.createElement('button');
+            replyBtn.type = 'button';
+            replyBtn.className = 'button button--quiet comment-reply-btn';
+            replyBtn.textContent = '답글';
+            actions.appendChild(replyBtn);
+        }
+        if (comment.owner) {
+            const editBtn = document.createElement('button');
+            editBtn.type = 'button';
+            editBtn.className = 'button button--quiet comment-edit-btn';
+            editBtn.textContent = '수정';
+            actions.appendChild(editBtn);
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.type = 'button';
+            deleteBtn.className = 'button button--danger comment-delete-btn';
+            deleteBtn.textContent = '삭제';
+            actions.appendChild(deleteBtn);
+        }
+        container.appendChild(actions);
+    }
+
+    function buildThreadNode(thread) {
+        const li = document.createElement('li');
+        li.className = 'comment-thread';
+
+        const commentDiv = document.createElement('div');
+        commentDiv.className = 'comment';
+        fillCommentContent(commentDiv, thread.comment, true);
+        li.appendChild(commentDiv);
+
+        if (thread.replies && thread.replies.length > 0) {
+            const repliesList = document.createElement('ul');
+            repliesList.className = 'comment-replies';
+            thread.replies.forEach((reply) => {
+                const replyLi = document.createElement('li');
+                replyLi.className = 'comment comment--reply';
+                fillCommentContent(replyLi, reply, false);
+                repliesList.appendChild(replyLi);
+            });
+            li.appendChild(repliesList);
+        }
+
+        return li;
+    }
+
+    function renderCommentPage(section, pageData) {
+        const countEl = section.querySelector('#comment-active-count');
+        if (countEl) {
+            countEl.textContent = String(pageData.activeCount);
+        }
+
+        const region = section.querySelector('#comment-list-region');
+        if (!region) {
+            return;
+        }
+        region.textContent = '';
+
+        if (!pageData.content || pageData.content.length === 0) {
+            const empty = document.createElement('p');
+            empty.className = 'empty-state';
+            empty.textContent = '첫 댓글을 남겨보세요.';
+            region.appendChild(empty);
+            section.dataset.currentPage = String(pageData.page);
+            return;
+        }
+
+        const list = document.createElement('ul');
+        list.id = 'comment-list';
+        list.className = 'comment-thread-list';
+        pageData.content.forEach((thread) => list.appendChild(buildThreadNode(thread)));
+        region.appendChild(list);
+
+        const nav = document.createElement('nav');
+        nav.className = 'pagination comment-pagination';
+        nav.setAttribute('aria-label', '댓글 페이지');
+        if (pageData.hasPrevious) {
+            const prev = document.createElement('a');
+            prev.className = 'pagination__link';
+            prev.href = '#';
+            prev.dataset.commentPage = String(pageData.page - 1);
+            prev.textContent = '이전';
+            nav.appendChild(prev);
+        }
+        const status = document.createElement('span');
+        status.className = 'pagination__status';
+        status.textContent = `${pageData.page + 1} / ${pageData.totalPages}`;
+        nav.appendChild(status);
+        if (pageData.hasNext) {
+            const next = document.createElement('a');
+            next.className = 'pagination__link';
+            next.href = '#';
+            next.dataset.commentPage = String(pageData.page + 1);
+            next.textContent = '다음';
+            nav.appendChild(next);
+        }
+        region.appendChild(nav);
+
+        section.dataset.currentPage = String(pageData.page);
+    }
+
+    function bindCommentSection() {
+        const section = document.querySelector('.comments');
+        if (!section) {
+            return;
+        }
+
+        const apiBase = section.dataset.commentsApiBase;
+        const message = section.querySelector('#comment-message');
+
+        async function loadPage(page) {
+            try {
+                const result = await apiRequest(`${apiBase}?page=${page}`);
+                renderCommentPage(section, result.body);
+                const url = new URL(window.location.href);
+                url.searchParams.set('commentPage', String(page));
+                window.history.pushState({commentPage: page}, '', url);
+            } catch (error) {
+                console.error('댓글 페이지를 불러오지 못했습니다.', error);
+                showMessage(message, 'error', errorMessage(error));
+            }
+        }
+
+        function toggleReplyForm(button) {
+            const commentEl = button.closest('.comment');
+            const existing = commentEl.querySelector('.reply-form');
+            if (existing) {
+                existing.remove();
+                return;
+            }
+
+            const form = document.createElement('form');
+            form.className = 'comment-form reply-form';
+            const textarea = document.createElement('textarea');
+            textarea.name = 'content';
+            textarea.required = true;
+            textarea.maxLength = 1000;
+            textarea.rows = 2;
+            textarea.setAttribute('aria-label', '답글 내용');
+            form.appendChild(textarea);
+            const actions = document.createElement('div');
+            actions.className = 'form-actions';
+            const submit = document.createElement('button');
+            submit.type = 'submit';
+            submit.className = 'button button--primary';
+            submit.textContent = '답글 등록';
+            actions.appendChild(submit);
+            form.appendChild(actions);
+
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                const content = textarea.value.trim();
+                if (!content) {
+                    textarea.setCustomValidity('공백이 아닌 내용을 입력해 주세요.');
+                    form.reportValidity();
+                    return;
+                }
+                textarea.setCustomValidity('');
+
+                const parentId = Number(commentEl.dataset.commentId);
+                setBusy(form, true);
+                try {
+                    const result = await apiRequest(apiBase, {
+                        method: 'POST',
+                        body: JSON.stringify({content, parentId})
+                    });
+                    showMessage(message, 'success', '답글을 등록했습니다.');
+                    await loadPage(result.body.targetPage);
+                } catch (error) {
+                    console.error('답글 등록에 실패했습니다.', error);
+                    showMessage(message, 'error', errorMessage(error));
+                    setBusy(form, false);
+                }
+            });
+
+            commentEl.appendChild(form);
+            textarea.focus();
+        }
+
+        function toggleEditForm(button) {
+            const commentEl = button.closest('.comment');
+            const existing = commentEl.querySelector('.edit-form');
+            if (existing) {
+                existing.remove();
+                return;
+            }
+
+            const contentEl = commentEl.querySelector('.comment-content');
+            const currentText = contentEl ? contentEl.textContent : '';
+
+            const form = document.createElement('form');
+            form.className = 'comment-form edit-form';
+            const textarea = document.createElement('textarea');
+            textarea.name = 'content';
+            textarea.required = true;
+            textarea.maxLength = 1000;
+            textarea.rows = 3;
+            textarea.value = currentText;
+            textarea.setAttribute('aria-label', '댓글 수정');
+            form.appendChild(textarea);
+            const actions = document.createElement('div');
+            actions.className = 'form-actions';
+            const submit = document.createElement('button');
+            submit.type = 'submit';
+            submit.className = 'button button--primary';
+            submit.textContent = '저장';
+            actions.appendChild(submit);
+            const cancel = document.createElement('button');
+            cancel.type = 'button';
+            cancel.className = 'button button--quiet';
+            cancel.textContent = '취소';
+            cancel.addEventListener('click', () => form.remove());
+            actions.appendChild(cancel);
+            form.appendChild(actions);
+
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                const content = textarea.value.trim();
+                if (!content) {
+                    textarea.setCustomValidity('공백이 아닌 내용을 입력해 주세요.');
+                    form.reportValidity();
+                    return;
+                }
+                textarea.setCustomValidity('');
+
+                const commentId = commentEl.dataset.commentId;
+                const version = Number(commentEl.dataset.version);
+                setBusy(form, true);
+                try {
+                    const result = await apiRequest(`${apiBase}/${commentId}`, {
+                        method: 'PUT',
+                        body: JSON.stringify({content, version})
+                    });
+                    showMessage(message, 'success', '댓글을 수정했습니다.');
+                    await loadPage(result.body.targetPage);
+                } catch (error) {
+                    console.error('댓글 수정에 실패했습니다.', error);
+                    showMessage(message, 'error', errorMessage(error));
+                    setBusy(form, false);
+                }
+            });
+
+            commentEl.appendChild(form);
+            textarea.focus();
+        }
+
+        async function handleDelete(button) {
+            if (!window.confirm('이 댓글을 삭제하시겠습니까? 삭제한 댓글은 복구할 수 없습니다.')) {
+                return;
+            }
+
+            const commentEl = button.closest('.comment');
+            const commentId = commentEl.dataset.commentId;
+            const version = commentEl.dataset.version;
+
+            setBusy(section, true);
+            try {
+                const deleteUrl = new URL(`${apiBase}/${commentId}`, window.location.origin);
+                deleteUrl.searchParams.set('version', version);
+                const result = await apiRequest(deleteUrl.toString(), {method: 'DELETE'});
+                showMessage(message, 'success', '댓글을 삭제했습니다.');
+                await loadPage(result.body.targetPage);
+            } catch (error) {
+                console.error('댓글 삭제에 실패했습니다.', error);
+                showMessage(message, 'error', errorMessage(error));
+            } finally {
+                setBusy(section, false);
+            }
+        }
+
+        section.addEventListener('click', async (event) => {
+            const pageLink = event.target.closest('[data-comment-page]');
+            if (pageLink) {
+                event.preventDefault();
+                await loadPage(Number(pageLink.dataset.commentPage));
+                return;
+            }
+
+            const replyBtn = event.target.closest('.comment-reply-btn');
+            if (replyBtn) {
+                toggleReplyForm(replyBtn);
+                return;
+            }
+
+            const editBtn = event.target.closest('.comment-edit-btn');
+            if (editBtn) {
+                toggleEditForm(editBtn);
+                return;
+            }
+
+            const deleteBtn = event.target.closest('.comment-delete-btn');
+            if (deleteBtn) {
+                await handleDelete(deleteBtn);
+            }
+        });
+
+        const createForm = document.getElementById('commentCreateForm');
+        if (createForm) {
+            createForm.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                const textarea = createForm.querySelector('textarea[name="content"]');
+                const content = textarea.value.trim();
+                if (!content) {
+                    textarea.setCustomValidity('공백이 아닌 내용을 입력해 주세요.');
+                    createForm.reportValidity();
+                    return;
+                }
+                textarea.setCustomValidity('');
+
+                setBusy(createForm, true);
+                try {
+                    const result = await apiRequest(apiBase, {
+                        method: 'POST',
+                        body: JSON.stringify({content, parentId: null})
+                    });
+                    textarea.value = '';
+                    showMessage(message, 'success', '댓글을 등록했습니다.');
+                    await loadPage(result.body.targetPage);
+                } catch (error) {
+                    console.error('댓글 등록에 실패했습니다.', error);
+                    showMessage(message, 'error', errorMessage(error));
+                } finally {
+                    setBusy(createForm, false);
+                }
+            });
+        }
+
+        window.addEventListener('popstate', () => {
+            const params = new URLSearchParams(window.location.search);
+            const page = Number(params.get('commentPage') || '0');
+            loadPage(page);
+        });
+    }
+
     function init() {
         renderStoredFlash();
         bindSaveForm();
         bindUpdateForm();
+        bindCommentSection();
     }
 
     if (document.readyState === 'loading') {

@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{layout/header :: header('게시글 상세', false)}"></head>
+<head th:replace="~{layout/header :: header('게시글 상세', true)}"></head>
 <body>
 <a class="skip-link" href="#main-content">본문으로 건너뛰기</a>
 
@@ -48,6 +48,95 @@
                th:href="@{/posts/{id}/edit(id=${post.id})}">수정</a>
         </footer>
     </article>
+
+    <section class="comments"
+              th:attr="data-comments-api-base=@{/api/v1/posts/{id}/comments(id=${post.id})},
+                       data-detail-url=@{/posts/{id}(id=${post.id})},
+                       data-current-page=${commentPage.page},
+                       data-current-user-id=${currentUserId}">
+        <h2>댓글 <span id="comment-active-count" th:text="${commentPage.activeCount}">0</span></h2>
+
+        <div id="comment-message" class="notice" data-comment-message hidden tabindex="-1"></div>
+
+        <p th:if="${currentUserId == null}">댓글을 작성하려면 로그인하세요.</p>
+
+        <form id="commentCreateForm" class="comment-form" th:if="${currentUserId != null}">
+            <div class="form-field">
+                <label for="comment-content" class="visually-hidden">댓글 내용</label>
+                <textarea id="comment-content" name="content" required maxlength="1000" rows="3"
+                          placeholder="댓글을 입력하세요" aria-describedby="comment-content-hint"></textarea>
+                <p id="comment-content-hint" class="field-hint">필수 입력 · 최대 1,000자</p>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="button button--primary">댓글 등록</button>
+            </div>
+        </form>
+
+        <div id="comment-list-region">
+            <p class="empty-state" th:if="${commentPage.content.isEmpty()}">첫 댓글을 남겨보세요.</p>
+
+            <ul id="comment-list" class="comment-thread-list" th:unless="${commentPage.content.isEmpty()}">
+                <li class="comment-thread" th:each="thread : ${commentPage.content}">
+                    <div class="comment"
+                         th:attr="data-comment-id=${thread.comment.id},
+                                  data-version=${thread.comment.version},
+                                  data-owner=${thread.comment.owner},
+                                  data-deleted=${thread.comment.deleted}">
+                        <p class="comment__body" th:if="${thread.comment.deleted}">삭제된 댓글입니다.</p>
+                        <th:block th:unless="${thread.comment.deleted}">
+                            <p class="comment__meta">
+                                <span class="comment__author" th:text="${thread.comment.author}">작성자</span>
+                                <time th:datetime="${thread.comment.createdDate}"
+                                      th:text="${thread.comment.createdDate}">2026-01-01T12:00:00</time>
+                            </p>
+                            <p class="comment__body comment-content" th:text="${thread.comment.content}">댓글 내용</p>
+                        </th:block>
+                        <div class="comment__actions" th:unless="${thread.comment.deleted}">
+                            <button type="button" class="button button--quiet comment-reply-btn">답글</button>
+                            <button type="button" class="button button--quiet comment-edit-btn"
+                                    th:if="${thread.comment.owner}">수정</button>
+                            <button type="button" class="button button--danger comment-delete-btn"
+                                    th:if="${thread.comment.owner}">삭제</button>
+                        </div>
+                    </div>
+
+                    <ul class="comment-replies" th:unless="${thread.replies.isEmpty()}">
+                        <li class="comment comment--reply" th:each="reply : ${thread.replies}"
+                            th:attr="data-comment-id=${reply.id},
+                                     data-version=${reply.version},
+                                     data-owner=${reply.owner},
+                                     data-deleted=${reply.deleted}">
+                            <p class="comment__body" th:if="${reply.deleted}">삭제된 댓글입니다.</p>
+                            <th:block th:unless="${reply.deleted}">
+                                <p class="comment__meta">
+                                    <span class="comment__author" th:text="${reply.author}">작성자</span>
+                                    <time th:datetime="${reply.createdDate}"
+                                          th:text="${reply.createdDate}">2026-01-01T12:00:00</time>
+                                </p>
+                                <p class="comment__body comment-content" th:text="${reply.content}">댓글 내용</p>
+                            </th:block>
+                            <div class="comment__actions" th:unless="${reply.deleted}">
+                                <button type="button" class="button button--quiet comment-edit-btn"
+                                        th:if="${reply.owner}">수정</button>
+                                <button type="button" class="button button--danger comment-delete-btn"
+                                        th:if="${reply.owner}">삭제</button>
+                            </div>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+
+            <nav class="pagination comment-pagination" aria-label="댓글 페이지" th:unless="${commentPage.content.isEmpty()}">
+                <a class="pagination__link" th:if="${commentPage.hasPrevious}"
+                   th:href="@{/posts/{id}(id=${post.id}, commentPage=${commentPage.page - 1})}"
+                   th:attr="data-comment-page=${commentPage.page - 1}">이전</a>
+                <span class="pagination__status" th:text="|${commentPage.page + 1} / ${commentPage.totalPages}|">1 / 1</span>
+                <a class="pagination__link" th:if="${commentPage.hasNext}"
+                   th:href="@{/posts/{id}(id=${post.id}, commentPage=${commentPage.page + 1})}"
+                   th:attr="data-comment-page=${commentPage.page + 1}">다음</a>
+            </nav>
+        </div>
+    </section>
 </main>
 
 <div th:replace="~{layout/footer :: footer}"></div>
