@@ -146,6 +146,12 @@ button:disabled {
     gap: 0.65rem;
 }
 
+.login-hint {
+    margin: 0;
+    color: var(--color-muted);
+    font-size: 0.82rem;
+}
+
 .account-actions form {
     margin: 0;
 }

@@ -11,5 +11,28 @@
     <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
 <body>
+<header class="site-header" th:fragment="siteHeader(secondaryHref, secondaryText)">
+    <div class="container site-header__inner">
+        <a class="brand" th:href="@{/}">Blitz</a>
+        <div class="account-actions">
+            <a class="text-link" th:if="${secondaryHref != null}"
+               th:href="${secondaryHref}" th:text="${secondaryText}">목록으로</a>
+            <th:block th:if="${userName != null}">
+                <span class="account-name"><strong th:text="${userName}">사용자</strong>님</span>
+                <a class="button button--primary" th:href="@{/posts/save}">글 등록</a>
+                <form th:action="@{/logout}" method="post">
+                    <input type="hidden" th:if="${_csrf != null}"
+                           th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                    <button type="submit" class="button button--quiet">로그아웃</button>
+                </form>
+            </th:block>
+            <nav class="login-actions" th:unless="${userName != null}" aria-label="로그인">
+                <p class="login-hint">OAuth 로그인 시 자동으로 회원가입됩니다.</p>
+                <a class="button button--outline" th:href="@{/oauth2/authorization/google}">Google 로그인</a>
+                <a class="button button--naver" th:href="@{/oauth2/authorization/naver}">Naver 로그인</a>
+            </nav>
+        </div>
+    </div>
+</header>
 </body>
 </html>

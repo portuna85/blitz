@@ -12,6 +12,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.validation.annotation.Validated;
@@ -24,13 +25,14 @@ public class IndexController {
     private final PostsService postsService;
     private final CommentsService commentsService;
 
+    @ModelAttribute("userName")
+    public String userName(@LoginUser SessionUser user) {
+        return user == null ? null : user.name();
+    }
+
     @GetMapping("/")
-    public String index(Model model, @LoginUser SessionUser user,
-                         @PageableDefault(size = 10) Pageable pageable) {
+    public String index(Model model, @PageableDefault(size = 10) Pageable pageable) {
         model.addAttribute("posts", postsService.findAllDesc(pageable));
-        if (user != null) {
-            model.addAttribute("userName", user.name());
-        }
         return "index";
     }
 

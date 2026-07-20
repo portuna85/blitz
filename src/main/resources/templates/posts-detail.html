@@ -4,12 +4,7 @@
 <body>
 <a class="skip-link" href="#main-content">본문으로 건너뛰기</a>
 
-<header class="site-header">
-    <div class="container site-header__inner">
-        <a class="brand" th:href="@{/}">Blitz</a>
-        <a class="text-link" th:href="@{/}">목록으로</a>
-    </div>
-</header>
+<header th:replace="~{layout/header :: siteHeader(@{/}, '목록으로')}"></header>
 
 <main id="main-content" class="container main-content main-content--article" tabindex="-1">
     <div id="flash-message" class="notice" data-flash-message hidden tabindex="-1"></div>

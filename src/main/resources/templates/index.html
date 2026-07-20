@@ -4,26 +4,7 @@
 <body>
 <a class="skip-link" href="#main-content">본문으로 건너뛰기</a>
 
-<header class="site-header">
-    <div class="container site-header__inner">
-        <a class="brand" th:href="@{/}">Blitz</a>
-        <div class="account-actions">
-            <th:block th:if="${userName != null}">
-                <span class="account-name"><strong th:text="${userName}">사용자</strong>님</span>
-                <a class="button button--primary" th:href="@{/posts/save}">글 등록</a>
-                <form th:action="@{/logout}" method="post">
-                    <input type="hidden" th:if="${_csrf != null}"
-                           th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                    <button type="submit" class="button button--quiet">로그아웃</button>
-                </form>
-            </th:block>
-            <nav class="login-actions" th:unless="${userName != null}" aria-label="로그인">
-                <a class="button button--outline" th:href="@{/oauth2/authorization/google}">Google 로그인</a>
-                <a class="button button--naver" th:href="@{/oauth2/authorization/naver}">Naver 로그인</a>
-            </nav>
-        </div>
-    </div>
-</header>
+<header th:replace="~{layout/header :: siteHeader(null, null)}"></header>
 
 <main id="main-content" class="container main-content" tabindex="-1">
     <div class="page-heading">
