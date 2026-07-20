@@ -150,6 +150,7 @@ button:disabled {
     margin: 0;
     color: var(--color-muted);
     font-size: 0.82rem;
+    white-space: nowrap;
 }
 
 .account-actions form {
@@ -638,6 +639,11 @@ button:disabled {
         text-align: right;
     }
 
+    .login-hint {
+        flex-basis: 100%;
+        text-align: right;
+    }
+
     .page-heading {
         align-items: flex-start;
         flex-direction: column;
@@ -661,6 +667,11 @@ button:disabled {
     }
 
     .account-name {
+        text-align: left;
+    }
+
+    .login-hint {
+        white-space: normal;
         text-align: left;
     }
 
