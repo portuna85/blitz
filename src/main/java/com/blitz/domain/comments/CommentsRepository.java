@@ -1,9 +1,11 @@
 package com.blitz.domain.comments;
 
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -19,6 +21,10 @@ public interface CommentsRepository extends JpaRepository<Comments, Long> {
     long countByPostIdAndDeletedFalse(Long postId);
 
     Optional<Comments> findByIdAndPostId(Long id, Long postId);
+
+    @Lock(LockModeType.PESSIMISTIC_READ)
+    @Query("select c from Comments c where c.id = :id and c.postId = :postId")
+    Optional<Comments> findByIdAndPostIdForUpdate(@Param("id") Long id, @Param("postId") Long postId);
 
     void deleteByPostId(Long postId);
 

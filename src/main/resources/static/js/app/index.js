@@ -362,13 +362,13 @@
         container.appendChild(actions);
     }
 
-    function buildThreadNode(thread) {
+    function buildThreadNode(thread, canComment) {
         const li = document.createElement('li');
         li.className = 'comment-thread';
 
         const commentDiv = document.createElement('div');
         commentDiv.className = 'comment';
-        fillCommentContent(commentDiv, thread.comment, true);
+        fillCommentContent(commentDiv, thread.comment, canComment);
         li.appendChild(commentDiv);
 
         if (thread.replies && thread.replies.length > 0) {
@@ -387,6 +387,7 @@
     }
 
     function renderCommentPage(section, pageData) {
+        const canComment = section.dataset.canComment === 'true';
         const countEl = section.querySelector('#comment-active-count');
         if (countEl) {
             countEl.textContent = String(pageData.activeCount);
@@ -410,7 +411,7 @@
         const list = document.createElement('ul');
         list.id = 'comment-list';
         list.className = 'comment-thread-list';
-        pageData.content.forEach((thread) => list.appendChild(buildThreadNode(thread)));
+        pageData.content.forEach((thread) => list.appendChild(buildThreadNode(thread, canComment)));
         region.appendChild(list);
 
         const nav = document.createElement('nav');
@@ -450,13 +451,17 @@
         const apiBase = section.dataset.commentsApiBase;
         const message = section.querySelector('#comment-message');
 
-        async function loadPage(page) {
+        async function loadPage(page, historyMode = 'push') {
             try {
                 const result = await apiRequest(`${apiBase}?page=${page}`);
                 renderCommentPage(section, result.body);
                 const url = new URL(window.location.href);
                 url.searchParams.set('commentPage', String(page));
-                window.history.pushState({commentPage: page}, '', url);
+                if (historyMode === 'push') {
+                    window.history.pushState({commentPage: page}, '', url);
+                } else if (historyMode === 'replace') {
+                    window.history.replaceState({commentPage: page}, '', url);
+                }
             } catch (error) {
                 console.error('댓글 페이지를 불러오지 못했습니다.', error);
                 showMessage(message, 'error', errorMessage(error));
@@ -669,8 +674,9 @@
 
         window.addEventListener('popstate', () => {
             const params = new URLSearchParams(window.location.search);
-            const page = Number(params.get('commentPage') || '0');
-            loadPage(page);
+            const parsed = Number.parseInt(params.get('commentPage'), 10);
+            const page = Number.isNaN(parsed) || parsed < 0 ? 0 : parsed;
+            loadPage(page, 'none');
         });
     }
 

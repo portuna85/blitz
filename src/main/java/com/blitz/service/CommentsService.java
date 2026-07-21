@@ -14,6 +14,7 @@ import com.blitz.web.dto.CommentSaveRequestDto;
 import com.blitz.web.dto.CommentThreadDto;
 import com.blitz.web.dto.CommentUpdateRequestDto;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -47,6 +48,10 @@ public class CommentsService {
 
         Pageable pageable = PageRequest.of(Math.max(page, 0), PAGE_SIZE, THREAD_SORT);
         Page<Comments> topLevel = commentsRepository.findByPostIdAndParentIdIsNull(postId, pageable);
+        if (topLevel.getTotalPages() > 0 && pageable.getPageNumber() >= topLevel.getTotalPages()) {
+            pageable = PageRequest.of(topLevel.getTotalPages() - 1, PAGE_SIZE, THREAD_SORT);
+            topLevel = commentsRepository.findByPostIdAndParentIdIsNull(postId, pageable);
+        }
 
         List<Long> parentIds = topLevel.getContent().stream().map(Comments::getId).toList();
         Map<Long, List<Comments>> repliesByParent = commentsRepository
@@ -73,7 +78,7 @@ public class CommentsService {
 
         Comments parent = null;
         if (requestDto.parentId() != null) {
-            parent = commentsRepository.findByIdAndPostId(requestDto.parentId(), postId)
+            parent = commentsRepository.findByIdAndPostIdForUpdate(requestDto.parentId(), postId)
                     .orElseThrow(() -> new CommentNotFoundException(postId, requestDto.parentId()));
             if (parent.isReply() || parent.isDeleted()) {
                 throw new InvalidParentCommentException(requestDto.parentId());
@@ -87,7 +92,11 @@ public class CommentsService {
                 .author(user.name())
                 .content(requestDto.content())
                 .build();
-        commentsRepository.save(comment);
+        try {
+            commentsRepository.save(comment);
+        } catch (DataIntegrityViolationException ex) {
+            throw new PostNotFoundException(postId);
+        }
 
         long topLevelId = parent == null ? comment.getId() : parent.getId();
         long targetPage = pageIndexOf(postId, topLevelId);

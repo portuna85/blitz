@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{layout/header :: pageHead('게시글 상세', true)}"></head>
+<head th:replace="~{layout/header :: pageHead('게시글 상세', ${userName != null})}"></head>
 <body>
 <a class="skip-link" href="#main-content">본문으로 건너뛰기</a>
 
@@ -48,7 +48,7 @@
               th:attr="data-comments-api-base=@{/api/v1/posts/{id}/comments(id=${post.id})},
                        data-detail-url=@{/posts/{id}(id=${post.id})},
                        data-current-page=${commentPage.page},
-                       data-current-user-id=${currentUserId}">
+                       data-can-comment=${currentUserId != null}">
         <h2>댓글 <span id="comment-active-count" th:text="${commentPage.activeCount}">0</span></h2>
 
         <div id="comment-message" class="notice" data-comment-message hidden tabindex="-1"></div>
@@ -87,7 +87,8 @@
                             <p class="comment__body comment-content" th:text="${thread.comment.content}">댓글 내용</p>
                         </th:block>
                         <div class="comment__actions" th:unless="${thread.comment.deleted}">
-                            <button type="button" class="button button--quiet comment-reply-btn">답글</button>
+                            <button type="button" class="button button--quiet comment-reply-btn"
+                                    th:if="${currentUserId != null}">답글</button>
                             <button type="button" class="button button--quiet comment-edit-btn"
                                     th:if="${thread.comment.owner}">수정</button>
                             <button type="button" class="button button--danger comment-delete-btn"

@@ -88,16 +88,35 @@ class IndexControllerTest {
     }
 
     @Test
-    @DisplayName("게시글 상세 페이지는 CSRF 메타 태그와 빈 댓글 상태를 렌더링한다")
-    void detailPageRendersCsrfMetaAndEmptyCommentState() throws Exception {
+    @DisplayName("익명 사용자가 게시글 상세 페이지를 조회하면 CSRF 메타 태그가 없고 세션도 생성되지 않는다")
+    void anonymousDetailPageOmitsCsrfMeta() throws Exception {
         Posts post = savePost(1L);
 
-        mvc.perform(get("/posts/{id}", post.getId()))
+        var result = mvc.perform(get("/posts/{id}", post.getId()))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("name=\"_csrf\""))))
+                .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("name=\"_csrf_header\""))))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("첫 댓글을 남겨보세요.")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("댓글을 작성하려면 로그인하세요.")))
+                .andReturn();
+
+        org.assertj.core.api.Assertions.assertThat(result.getRequest().getSession(false)).isNull();
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    @DisplayName("로그인 사용자가 게시글 상세 페이지를 조회하면 CSRF 메타 태그가 렌더링된다")
+    void loggedInDetailPageIncludesCsrfMeta() throws Exception {
+        Posts post = savePost(1L);
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute(
+                SessionUser.SESSION_ATTRIBUTE,
+                new SessionUser(1L, "author", "author@example.com"));
+
+        mvc.perform(get("/posts/{id}", post.getId()).session(session))
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("name=\"_csrf\"")))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("name=\"_csrf_header\"")))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("첫 댓글을 남겨보세요.")))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("댓글을 작성하려면 로그인하세요.")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("name=\"_csrf_header\"")));
     }
 
     @Test
@@ -132,6 +151,49 @@ class IndexControllerTest {
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("other comment")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("comment-edit-btn")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("comment-delete-btn")));
+    }
+
+    @Test
+    @DisplayName("익명 사용자는 답글 버튼을 볼 수 없고 내부 사용자 PK 대신 can-comment 플래그만 노출된다")
+    void anonymousVisitorDoesNotSeeReplyButton() throws Exception {
+        Posts post = savePost(1L);
+        commentsRepository.saveAndFlush(Comments.builder()
+                .postId(post.getId())
+                .parentId(null)
+                .authorUserId(1L)
+                .author("author")
+                .content("top level comment")
+                .build());
+
+        mvc.perform(get("/posts/{id}", post.getId()))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("comment-reply-btn"))))
+                .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("data-current-user-id"))))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("data-can-comment=\"false\"")));
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    @DisplayName("로그인 사용자는 자신의 댓글이 아니어도 답글 버튼을 볼 수 있다")
+    void loggedInNonOwnerSeesReplyButton() throws Exception {
+        Posts post = savePost(1L);
+        commentsRepository.saveAndFlush(Comments.builder()
+                .postId(post.getId())
+                .parentId(null)
+                .authorUserId(2L)
+                .author("other")
+                .content("top level comment")
+                .build());
+
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute(
+                SessionUser.SESSION_ATTRIBUTE,
+                new SessionUser(1L, "author", "author@example.com"));
+
+        mvc.perform(get("/posts/{id}", post.getId()).session(session))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("comment-reply-btn")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("data-can-comment=\"true\"")));
     }
 
     @Test

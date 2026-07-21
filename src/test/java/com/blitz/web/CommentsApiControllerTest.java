@@ -115,6 +115,19 @@ class CommentsApiControllerTest {
     }
 
     @Test
+    @DisplayName("범위를 벗어난 페이지를 요청하면 마지막 유효 페이지를 반환한다")
+    void outOfRangePageClampsToLastValidPage() throws Exception {
+        for (int i = 0; i < 21; i++) {
+            saveComment(post.getId(), null, LOGIN_USER_ID, "top" + i);
+        }
+
+        mvc.perform(get("/api/v1/posts/{postId}/comments", post.getId()).queryParam("page", "99"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.page").value(1))
+                .andExpect(jsonPath("$.content.length()").value(1));
+    }
+
+    @Test
     @DisplayName("익명 작성 요청은 401을 반환한다")
     void anonymousCreationIsUnauthorized() throws Exception {
         CommentSaveRequestDto requestDto = new CommentSaveRequestDto("content", null);
