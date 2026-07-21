@@ -28,18 +28,20 @@
 
 ### 우선순위 요약
 
-| 우선순위 | 문제 | 영향 | 핵심 조치 |
-| --- | --- | --- | --- |
-| P0 | 배포 JAR이 현재 소스보다 오래됨 | 댓글 코드·V11이 없는 산출물 배포 가능 | CI에서 `clean check bootJar` 후 생성 산출물만 배포 |
-| P0 | H2 테스트가 Flyway·MariaDB 제약을 검증하지 않음 | 운영 스키마 drift와 FK·collation 오류를 놓침 | MariaDB Testcontainers + Flyway 통합 테스트 추가 |
-| P0 | 댓글 History API와 인증별 action 렌더링 결함 | 뒤로 가기 history 증식, 익명 reply UI 노출 | history mode 분리, 인증 상태 기반 렌더링, JS 회귀 테스트 |
-| P0 | 익명 상세 조회에서도 CSRF 토큰 렌더링 | 공개 조회가 JDBC 세션을 만들 수 있어 DB 부하 증가 | 로그인 사용자에게만 CSRF 메타 렌더링 |
-| P0 | 부모 댓글 검증과 동시 삭제 사이 경쟁 조건 | 삭제된 부모에 답글이 생성될 수 있음 | MariaDB 동시성 테스트 후 row lock 또는 조건부 쓰기 적용 |
-| P1 | mutation마다 모든 상위 댓글 ID 조회 | 댓글 수에 비례하는 O(n) 메모리·DB 비용 | 대상 정렬 위치를 `COUNT`/rank query로 계산 |
-| P1 | 한 상위 댓글의 답글을 무제한 일괄 반환 | 큰 thread가 응답 크기·메모리를 독점 | 답글 상한·별도 cursor pagination 설계 |
-| P1 | 브라우저 JS가 단일 600여 줄 파일이며 테스트 없음 | 경합·history·focus 회귀가 발견되지 않음 | 모듈 분리와 DOM/API 단위 테스트 도입 |
-| P1 | 운영 프로필·공급망·관측성 자동화 부족 | 재현성·배포 안전성·장애 분석 저하 | 명시적 prod 설정, dependency verification, CI, metrics 보강 |
-| P2 | 샘플·레거시 endpoint와 중복 모델이 남음 | 공격 표면과 유지보수 비용 증가 | 사용 여부 확인 후 제거·deprecation |
+| 상태 | 우선순위 | 문제 | 영향 | 핵심 조치 |
+| --- | --- | --- | --- | --- |
+| 미착수 | P0 | 배포 JAR이 현재 소스보다 오래됨 | 댓글 코드·V11이 없는 산출물 배포 가능 | CI에서 `clean check bootJar` 후 생성 산출물만 배포 |
+| 미착수 | P0 | H2 테스트가 Flyway·MariaDB 제약을 검증하지 않음 | 운영 스키마 drift와 FK·collation 오류를 놓침 | MariaDB Testcontainers + Flyway 통합 테스트 추가 |
+| 완료 (2026-07-21) | P0 | 댓글 History API와 인증별 action 렌더링 결함 | 뒤로 가기 history 증식, 익명 reply UI 노출 | history mode 분리, 인증 상태 기반 렌더링, JS 회귀 테스트 |
+| 완료 (2026-07-21) | P0 | 익명 상세 조회에서도 CSRF 토큰 렌더링 | 공개 조회가 JDBC 세션을 만들 수 있어 DB 부하 증가 | 로그인 사용자에게만 CSRF 메타 렌더링 |
+| 완료 (2026-07-21)* | P0 | 부모 댓글 검증과 동시 삭제 사이 경쟁 조건 | 삭제된 부모에 답글이 생성될 수 있음 | MariaDB 동시성 테스트 후 row lock 또는 조건부 쓰기 적용 |
+| 미착수 | P1 | mutation마다 모든 상위 댓글 ID 조회 | 댓글 수에 비례하는 O(n) 메모리·DB 비용 | 대상 정렬 위치를 `COUNT`/rank query로 계산 |
+| 미착수 | P1 | 한 상위 댓글의 답글을 무제한 일괄 반환 | 큰 thread가 응답 크기·메모리를 독점 | 답글 상한·별도 cursor pagination 설계 |
+| 미착수 | P1 | 브라우저 JS가 단일 600여 줄 파일이며 테스트 없음 | 경합·history·focus 회귀가 발견되지 않음 | 모듈 분리와 DOM/API 단위 테스트 도입 |
+| 미착수 | P1 | 운영 프로필·공급망·관측성 자동화 부족 | 재현성·배포 안전성·장애 분석 저하 | 명시적 prod 설정, dependency verification, CI, metrics 보강 |
+| 미착수 | P2 | 샘플·레거시 endpoint와 중복 모델이 남음 | 공격 표면과 유지보수 비용 증가 | 사용 여부 확인 후 제거·deprecation |
+
+\* 부모 댓글 락과 FK 위반 변환은 적용했지만, 실제 다중 스레드 기반 MariaDB 잠금 경합 검증은 §3.2 Testcontainers 도입 후로 남아 있다.
 
 ## 3. P0: 출시 전에 처리할 항목
 
@@ -87,9 +89,11 @@
 - 사용자·게시글·부모 댓글 FK 위반과 게시글 cascade 삭제가 예상한 상태 코드와 데이터 결과를 낸다.
 - 이미 적용된 V1~V11은 수정하지 않고 모든 보강은 V12 이후 migration으로 추가한다.
 
-### 3.3 댓글 브라우저 상태와 인증별 UI 수정
+### 3.3 댓글 브라우저 상태와 인증별 UI 수정 — 완료 (2026-07-21)
 
-`popstate` handler가 `loadPage()`를 호출하고, `loadPage()`가 다시 `pushState()`를 실행한다. 사용자가 뒤로 가기를 누를 때 새 history entry가 생길 수 있다. 또한 서버 HTML과 동적 DOM 모두 활성 상위 댓글에 reply 버튼을 항상 만들기 때문에 익명 사용자도 완료할 수 없는 답글 폼을 보게 된다. `data-current-user-id`에는 JS가 사용하지 않는 내부 사용자 PK도 노출된다.
+`loadPage(page, historyMode)`로 분리해 `popstate`는 `pushState`를 다시 호출하지 않도록 수정했고(개선안 1), `commentPage`는 `CommentsService.findPage`에서 서버 측으로 마지막 유효 페이지로 클램프한다(개선안 2, 완료 기준의 "마지막 유효 페이지" 정책 채택). `data-current-user-id`는 `data-can-comment="true|false"`로 대체했고, 서버 템플릿과 JS 렌더링 양쪽에서 로그인 사용자에게만 reply 버튼을 노출한다(개선안 3). `popstate` 핸들러에 `commentPage` 파싱 NaN/음수 가드를 추가했다. 동적 pagination link의 실제 `href` fallback(개선안 4), `AbortController` 기반 오래된 응답 폐기(개선안 5), mutation 후 focus 이동과 busy 상태 알림(개선안 6)은 이번 범위에 포함하지 않았다 — 남은 작업으로 유지한다.
+
+기존 문제: `popstate` handler가 `loadPage()`를 호출하고, `loadPage()`가 다시 `pushState()`를 실행해 사용자가 뒤로 가기를 누를 때 새 history entry가 생겼다. 서버 HTML과 동적 DOM 모두 활성 상위 댓글에 reply 버튼을 항상 만들어 익명 사용자도 완료할 수 없는 답글 폼을 보였고, `data-current-user-id`에는 JS가 사용하지 않는 내부 사용자 PK가 노출되었다.
 
 개선안:
 
@@ -107,9 +111,11 @@
 - HTML에 `currentUserId`가 없고 소유권은 서버 응답의 `owner` boolean만 사용한다.
 - 느린 이전 요청이 최신 페이지를 덮어쓰지 않는다.
 
-### 3.4 익명 조회의 세션 생성 방지
+### 3.4 익명 조회의 세션 생성 방지 — 완료 (2026-07-21)
 
-`posts-detail.html`은 모든 요청에서 `pageHead(..., true)`를 호출한다. Thymeleaf가 `_csrf`를 평가하면 지연 CSRF token이 구체화되고 익명 공개 조회도 JDBC 세션 row를 만들 수 있다. `LoginUserArgumentResolver`는 익명 요청에서 새 세션을 만들지 않도록 구현되어 있지만 템플릿이 그 이점을 상쇄할 수 있다.
+`posts-detail.html`의 `pageHead(...)` 호출을 `${userName != null}`로 바꿔 로그인 사용자에게만 CSRF meta를 렌더링한다(개선안 1, 2). `IndexControllerTest`에 익명 GET이 `_csrf` meta를 렌더링하지 않고 `request.getSession(false)`가 `null`임을 검증하는 테스트를 추가했다(개선안 3, MockMvc 수준 — 실제 JDBC session row 카운트 검증까지는 하지 않는다). 로그인 사용자 CSRF 쓰기 테스트는 기존대로 통과한다(개선안 4).
+
+기존 문제: `posts-detail.html`은 모든 요청에서 `pageHead(..., true)`를 호출한다. Thymeleaf가 `_csrf`를 평가하면 지연 CSRF token이 구체화되고 익명 공개 조회도 JDBC 세션 row를 만들 수 있다. `LoginUserArgumentResolver`는 익명 요청에서 새 세션을 만들지 않도록 구현되어 있지만 템플릿이 그 이점을 상쇄할 수 있다.
 
 개선안:
 
@@ -123,9 +129,11 @@
 - 익명 상세 HTML에 `_csrf` meta가 없고 공개 GET이 세션을 생성하지 않는다.
 - 로그인 사용자의 실제 렌더링 token을 사용한 게시글·댓글 쓰기 테스트는 계속 성공한다.
 
-### 3.5 댓글 생성·삭제 경쟁 조건 보강
+### 3.5 댓글 생성·삭제 경쟁 조건 보강 — 부분 완료 (2026-07-21)
 
-답글 생성은 부모를 읽어 활성 상위 댓글인지 확인한 뒤 insert한다. 검증 이후 다른 transaction이 부모를 tombstone으로 바꾸면 삭제된 부모 아래 새 답글이 들어갈 수 있다. 게시글 존재 확인과 댓글 insert 사이에도 게시글 삭제 경쟁이 있으며, 이 경우 FK 예외가 구조화되지 않은 500으로 끝날 가능성이 있다.
+`CommentsRepository`에 `@Lock(PESSIMISTIC_READ)` 기반 `findByIdAndPostIdForUpdate`를 추가하고 답글 생성 시 부모 조회에 사용해 동시 tombstone과의 경쟁을 막았다(개선안 2, 기존 `InvalidParentCommentException`을 재사용). 게시글 동시 삭제로 인한 `DataIntegrityViolationException`은 `CommentsService.create()`에서 잡아 기존 `PostNotFoundException`(404)으로 변환한다(개선안 3). `CommentsServiceTest`(Mockito, 이 저장소 첫 순수 단위 테스트)로 FK 위반 변환 경로를 검증했다. 다만 이 저장소에는 아직 MariaDB Testcontainers가 없어(§3.2 미착수), 실제 다중 스레드 잠금 경합 테스트(개선안 1)와 transaction/lock 순서 문서화(개선안 4)는 하지 않았다 — §3.2 완료 후 이어서 진행한다.
+
+기존 문제: 답글 생성은 부모를 읽어 활성 상위 댓글인지 확인한 뒤 insert한다. 검증 이후 다른 transaction이 부모를 tombstone으로 바꾸면 삭제된 부모 아래 새 답글이 들어갈 수 있다. 게시글 존재 확인과 댓글 insert 사이에도 게시글 삭제 경쟁이 있으며, 이 경우 FK 예외가 구조화되지 않은 500으로 끝날 가능성이 있다.
 
 개선안:
 
@@ -399,15 +407,15 @@
 
 ### 1단계: 즉시 안전화
 
-1. stale artifact 배포를 막는 CI와 clean build smoke를 추가한다.
-2. 익명 CSRF/session, reply action, current user PK, History API를 수정한다.
-3. 관련 MVC·JS 회귀 테스트를 먼저 추가한다.
+1. [ ] stale artifact 배포를 막는 CI와 clean build smoke를 추가한다. (§3.1, 미착수)
+2. [x] 익명 CSRF/session, reply action, current user PK, History API를 수정한다. (§3.3, §3.4, 2026-07-21 완료)
+3. [x] 관련 MVC·JS 회귀 테스트를 먼저 추가한다. (서버 측 MockMvc 테스트만 — JS 자동 테스트는 도입하지 않고 수동 브라우저 확인으로 대체)
 
 ### 2단계: 데이터 무결성
 
-1. MariaDB Testcontainers와 Flyway suite를 추가한다.
-2. 부모 삭제/답글 생성과 게시글 삭제/댓글 생성 경쟁을 재현하고 transaction 전략을 보강한다.
-3. V12가 필요하면 check/index를 새 migration으로만 추가한다.
+1. [ ] MariaDB Testcontainers와 Flyway suite를 추가한다. (§3.2, 미착수)
+2. [x]/[ ] 부모 삭제/답글 생성 경쟁은 pessimistic lock으로 보강 완료(§3.5). 게시글 삭제/댓글 생성 경쟁은 FK 예외 변환으로 대응했으나, 실제 MariaDB 동시성 재현·검증은 Testcontainers 도입 후로 남아 있다.
+3. [ ] V12가 필요하면 check/index를 새 migration으로만 추가한다. (해당 없음 — 이번 변경은 기존 스키마로 충분)
 
 ### 3단계: 측정 기반 최적화
 
